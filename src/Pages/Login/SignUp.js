@@ -1,54 +1,82 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
-  useSignInWithEmailAndPassword,
+  useCreateUserWithEmailAndPassword,
   useSignInWithGoogle,
+  useUpdateProfile,
 } from "react-firebase-hooks/auth";
 import auth from "../../firebase.init";
 import { useForm } from "react-hook-form";
 import Loading from "../Shared/Loading/Loading";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-const Login = () => {
+import { Link, useNavigate } from "react-router-dom";
+
+const SignUp = () => {
   const [signInWithGoogle, googleUser, googleLoading, googleError] =
     useSignInWithGoogle(auth);
-  const [signInWithEmailAndPassword, user, loading, error] =
-    useSignInWithEmailAndPassword(auth);
-  let navigate = useNavigate();
-  let location = useLocation();
-  let from = location.state?.from?.pathname || "/";
+  const [createUserWithEmailAndPassword, user, loading, error] =
+    useCreateUserWithEmailAndPassword(auth);
+  const [updateProfile, updating, updatingError] = useUpdateProfile(auth);
+  const navigate = useNavigate();
   const {
     register,
     formState: { errors },
     handleSubmit,
   } = useForm();
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log(data);
-    signInWithEmailAndPassword(data.email, data.password);
+    await createUserWithEmailAndPassword(data.email, data.password);
+    await updateProfile({ displayName: data.name });
+    console.log("update done");
+    navigate("/appointment");
   };
 
   let signInError;
-  useEffect(() => {
-    if (googleUser || user) {
-      navigate(from, { replace: true });
-    }
-  }, [googleUser, user, from, navigate]);
 
-  if (loading || googleLoading) {
+  if (loading || googleLoading || updating) {
     return <Loading></Loading>;
   }
-  if (error || googleError) {
+  if (error || googleError || updatingError) {
     signInError = (
       <p className="text-center text-red-600 pb-3">
-        <small>{error?.message || googleError?.message}</small>
+        <small>
+          {error?.message || googleError?.message || updatingError?.message}
+        </small>
       </p>
     );
   }
-
+  if (googleUser) {
+    console.log(googleUser);
+  }
   return (
     <div className="flex h-screen justify-center items-center">
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="text-center text-2xl font-bold">Login</h2>
+          <h2 className="text-center text-2xl font-bold">Sign Up</h2>
           <form onSubmit={handleSubmit(onSubmit)}>
+            {/* ----------------------------------------------Name field-------------------------------------- */}
+            <div className="form-control w-full max-w-xs">
+              <label className="label">
+                <span className="label-text">Name</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Your Name"
+                className="input input-bordered w-full max-w-xs"
+                {...register("name", {
+                  required: {
+                    value: true,
+                    message: "Name is Required",
+                  },
+                })}
+              />
+              <label className="label">
+                {errors.name?.type === "required" && (
+                  <span className="label-text-alt text-red-500">
+                    {errors.name.message}
+                  </span>
+                )}
+              </label>
+            </div>
+            {/* ----------------------------------------------email field-------------------------------------- */}
             <div className="form-control w-full max-w-xs">
               <label className="label">
                 <span className="label-text">Email</span>
@@ -82,6 +110,7 @@ const Login = () => {
                 )}
               </label>
             </div>
+            {/* ----------------------------------------------password field-------------------------------------- */}
             <div className="form-control w-full max-w-xs">
               <label className="label">
                 <span className="label-text">Password</span>
@@ -119,14 +148,14 @@ const Login = () => {
             <input
               className="btn w-full max-w-xs"
               type="submit"
-              value="Login"
+              value="SignUp"
             />
           </form>
           <p className="text-center">
             <small>
-              New to Doctors Portal?
-              <Link to="/signup" className="text-primary">
-                Create new account
+              Already have an account
+              <Link to="/login" className="text-primary">
+                Please login
               </Link>
             </small>
           </p>
@@ -143,4 +172,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default SignUp;
