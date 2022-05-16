@@ -7,6 +7,7 @@ import auth from "../../firebase.init";
 import { useForm } from "react-hook-form";
 import Loading from "../Shared/Loading/Loading";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import useToken from "../../hook/useToken";
 const Login = () => {
   const [signInWithGoogle, googleUser, googleLoading, googleError] =
     useSignInWithGoogle(auth);
@@ -24,13 +25,14 @@ const Login = () => {
     console.log(data);
     signInWithEmailAndPassword(data.email, data.password);
   };
+  const [token] = useToken(user || googleUser);
 
   let signInError;
   useEffect(() => {
-    if (googleUser || user) {
+    if (token) {
       navigate(from, { replace: true });
     }
-  }, [googleUser, user, from, navigate]);
+  }, [token, from, navigate]);
 
   if (loading || googleLoading) {
     return <Loading></Loading>;
@@ -130,6 +132,12 @@ const Login = () => {
               </Link>
             </small>
           </p>
+          <Link
+            to="/forgotpassword"
+            className="text-xs text-center text-primary"
+          >
+            Forgot Password
+          </Link>
           <div className="divider">OR</div>
           <button
             onClick={() => signInWithGoogle()}

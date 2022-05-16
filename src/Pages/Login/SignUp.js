@@ -1,6 +1,7 @@
 import React from "react";
 import {
   useCreateUserWithEmailAndPassword,
+  useSendEmailVerification,
   useSignInWithGoogle,
   useUpdateProfile,
 } from "react-firebase-hooks/auth";
@@ -8,6 +9,7 @@ import auth from "../../firebase.init";
 import { useForm } from "react-hook-form";
 import Loading from "../Shared/Loading/Loading";
 import { Link, useNavigate } from "react-router-dom";
+import useToken from "../../hook/useToken";
 
 const SignUp = () => {
   const [signInWithGoogle, googleUser, googleLoading, googleError] =
@@ -15,6 +17,9 @@ const SignUp = () => {
   const [createUserWithEmailAndPassword, user, loading, error] =
     useCreateUserWithEmailAndPassword(auth);
   const [updateProfile, updating, updatingError] = useUpdateProfile(auth);
+  const [sendEmailVerification, verificationSending, verificationError] =
+    useSendEmailVerification(auth);
+  const [token] = useToken(user || googleUser);
   const navigate = useNavigate();
   const {
     register,
@@ -25,8 +30,9 @@ const SignUp = () => {
     console.log(data);
     await createUserWithEmailAndPassword(data.email, data.password);
     await updateProfile({ displayName: data.name });
+    await sendEmailVerification(true);
     console.log("update done");
-    navigate("/appointment");
+    // navigate("/appointment");
   };
 
   let signInError;
@@ -43,8 +49,8 @@ const SignUp = () => {
       </p>
     );
   }
-  if (googleUser) {
-    console.log(googleUser);
+  if (token) {
+    navigate("/appointment");
   }
   return (
     <div className="flex h-screen justify-center items-center">
